@@ -5,7 +5,7 @@
 ## Project Context  
 Urban environments create highly variable microclimates due to differences in surface materials, shading, and spatial structure. These small-scale variations play a key role in urban heat dynamics and climate adaptation.
 
-This project analyzes high-resolution climate data collected using TU Berlin’s portable **HuMVe station**, with the aim of understanding how local urban conditions influence temperature and radiation patterns.
+This project analyzes high-resolution climate data collected using TU Berlin’s portable [HuMVe station](https://www.tu.berlin/klima/studium-lehre/lehrangebot/e-learning/human-meteorological-vehicle), with the aim of understanding how local urban conditions influence temperature and radiation patterns.
 
 ## Research Focus  
 
