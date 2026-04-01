@@ -1,6 +1,6 @@
 # Urban Microclimate Analysis
 
-[View full report (HTML)](HumVe_Analysis.html)
+[View full report](https://adipetkova-web.github.io/urban-microclimate-analysis/)
 
 ## Overview
 This project analyzes urban climate data collected using TU Berlin’s portable climate station (HuMVe).  
