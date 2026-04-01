@@ -1,0 +1,181 @@
+---
+title: "Urban Microclimate Analysis"
+author: "Adelina Petkova"
+date: "2026-03-31"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(dplyr)
+library(ggplot2)
+```
+
+
+## Introduction
+
+The HuMVe (Human Meteorological Vehicle) dataset contains meteorological measurements collected during a 24-hour campaign in Berlin-Pankow in June 2025. This report examines how surface temperature and urban structure influence air temperature and shortwave radiation across selected urban locations.
+
+A particular focus is placed on three questions:
+
+- Which sites experience the most hours with high shortwave radiation?
+- How strongly is air temperature related to surface temperature?
+- Do the sites Hag_SüdOst and Hus_MitteWest differ significantly in shortwave radiation during daylight hours?
+
+## Data Preparation
+
+The dataset is loaded using the provided custom function. The variable "Standort" (Location) is converted to a factor for easier grouping and comparison in the later analysis.
+
+```{r}
+source("func/read_humve_func.R")
+
+humve <- read_humve_func(
+  fdir_data = "data",
+  fdir_protos = "logs"
+)
+
+humve$Standort <- as.factor(humve$Standort)
+```
+
+## Solar Radiation Analysis
+
+This section identifies which monitoring locations recorded the most hours with high shortwave radiation. For this purpose, hours with values above 500 W/m² are counted for each site.
+
+```{r}
+high_rad_summary <- humve %>%
+  filter(ShortIn_Avg > 500) %>%
+  group_by(Standort) %>%
+  summarise(hours_high_rad = n()) %>%
+  arrange(desc(hours_high_rad))
+
+high_rad_summary
+```
+
+```{r}
+ggplot(high_rad_summary, aes(x = reorder(Standort, -hours_high_rad), y = hours_high_rad)) +
+  geom_col() +
+  labs(
+    x = "Site",
+    y = "Hours with shortwave radiation > 500 W/m²",
+    title = "High-radiation hours by monitoring site"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+The results show that some locations experience substantially more hours of high solar radiation than others. This likely reflects differences in shading, vegetation, and urban form.
+
+## Relationship Between Surface and Air Temperature
+
+This section examines whether surface temperature is a strong predictor of air temperature.
+
+``` {r}
+ggplot(humve, aes(x = IRTS_T_Corr_Avg, y = Temp_t_Avg)) +
+  geom_point() +
+  xlim(10, 35) +
+  ylim(10, 35) +
+  labs(
+    x = "Surface temperature (°C)",
+    y = "Air temperature (°C)",
+    title = "Relationship between surface and air temperature"
+  ) +
+  geom_smooth(method = "lm", color = "red") +
+  theme_minimal()
+```
+
+The scatter plot indicates a strong positive relationship between surface temperature and air temperature. Higher surface temperatures are associated with higher air temperatures.
+
+```{r}
+model <- lm(Temp_t_Avg ~ IRTS_T_Corr_Avg, data = humve)
+summary(model)
+```
+
+The regression model confirms this relationship and shows that surface temperature explains a large proportion of the variation in air temperature.
+
+To illustrate the model further, a prediction is calculated for a surface temperature of 34 °C.
+
+```{r}
+temp <- data.frame(IRTS_T_Corr_Avg = 34)
+predicted_value <- predict(model, temp)
+
+predicted_value
+ggplot(humve, aes(x = IRTS_T_Corr_Avg, y = Temp_t_Avg)) +
+  geom_point() +
+  xlim(10, 35) +
+  ylim(10, 35) +
+  labs(
+    x = "Surface temperature (°C)",
+    y = "Air temperature (°C)",
+    title = "Regression model with predicted value at 34 °C surface temperature"
+  ) +
+  geom_smooth(method = "lm", color = "red") +
+  geom_point(aes(x = 34, y = predicted_value), color = "orange", size = 3) +
+  theme_minimal()
+```
+
+The model predicts an air temperature of about 31.2 °C when the surface temperature reaches 34 °C.
+
+## Statistical Comparison of Two Sites
+
+This section compares shortwave radiation between the sites Hag_SüdOst and Hus_MitteWest during daylight hours (05:00 to 19:00).
+
+```{r}
+humve$hour <- as.numeric(format(humve$TIMESTAMP, "%H"))
+
+ex_3 <- humve[
+  humve$stat_nr %in% c(5, 7) &
+    humve$hour >= 5 &
+    humve$hour <= 19,
+  c("Standort", "stat_nr", "prot_nr", "TIMESTAMP", "ShortIn_Avg", "hour")
+]
+```
+
+Before comparing the two sites, the distribution of shortwave radiation is assessed both visually and statistically to determine whether a parametric or non-parametric test is appropriate.
+
+```{r}
+par(mfrow = c(1, 2))
+
+qqnorm(ex_3$ShortIn_Avg[ex_3$stat_nr == 5], main = "QQ Plot: Hag_SüdOst")
+qqline(ex_3$ShortIn_Avg[ex_3$stat_nr == 5])
+
+qqnorm(ex_3$ShortIn_Avg[ex_3$stat_nr == 7], main = "QQ Plot: Hus_MitteWest")
+qqline(ex_3$ShortIn_Avg[ex_3$stat_nr == 7])
+```
+
+The QQ plots show visible deviations from normality for both sites.
+
+```{r}
+shapiro.test(ex_3$ShortIn_Avg[ex_3$stat_nr == 5])
+shapiro.test(ex_3$ShortIn_Avg[ex_3$stat_nr == 7])
+```
+
+The Shapiro-Wilk tests confirm that the raw data are not normally distributed.
+
+```{r}
+ggplot(ex_3, aes(x = Standort, y = ShortIn_Avg)) +
+  geom_boxplot() +
+  labs(
+    x = "Site",
+    y = "Shortwave radiation (W/m²)",
+    title = "Comparison of shortwave radiation between the two sites"
+  ) +
+  theme_minimal()
+```
+
+The boxplot shows clear differences in both the distribution and the median shortwave radiation between the two sites.
+
+These differences are also reflected in the QQ plots and confirmed by the Shapiro-Wilk tests, which indicate that the data are not normally distributed.
+
+Because the normality assumption is violated, a non-parametric approach is required. Therefore, a Wilcoxon test is used to compare shortwave radiation between the two sites.
+
+```{r}
+wilcox.test(ShortIn_Avg ~ stat_nr, data = ex_3)
+```
+
+The test indicates a significant difference in shortwave radiation between the two sites.
+
+Interestingly, the site with street trees shows higher shortwave radiation values, which is somewhat unexpected, since vegetation is typically associated with increased shading. One possible explanation is that differences in street geometry and sky-view factor may be more important than vegetation alone. A wider street or lower surrounding building density may allow more direct solar radiation to reach the surface even where trees are present. These results suggest that urban structure can have complex and sometimes counterintuitive effects on local microclimate conditions.
+
+## Conclusion
+
+This analysis shows that surface temperature is strongly associated with air temperature and that shortwave radiation differs significantly between urban locations. The comparison of Hag_SüdOst and Hus_MitteWest suggests that local urban form, including vegetation, street width, and sky-view factor, may strongly influence radiation conditions. Overall, the results highlight how urban structure can shape microclimate patterns at a local scale.
