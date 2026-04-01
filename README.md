@@ -15,18 +15,17 @@ The goal is to understand how surface temperature and urban structure influence 
 - Linear regression modeling
 - Normality testing (Shapiro-Wilk)
 - Non-parametric testing (Wilcoxon test)
-- Data transformation (log, square root)
 
 ## Key Findings
 - Surface temperature is a strong predictor of air temperature (R² ≈ 0.86)
 - Solar radiation differs significantly between locations
 - Urban structure likely influences microclimate conditions
-- Log transformation improved normality of skewed environmental data
 
 ## Tools Used
 - R
 - dplyr
 - ggplot2
+- Custom function for reading the HumVe data, both provided by the TU Berlin
 
 ## Project Structure
 - `analysis.R` → main analysis script
