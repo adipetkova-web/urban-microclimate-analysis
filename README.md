@@ -49,11 +49,6 @@ The workflow reflects common challenges in environmental data analysis, such as 
 - ggplot2  
 - Custom HuMVe data import functions (TU Berlin)  
 
-## Repository Structure  
-├── analysis.Rmd # Reproducible analysis
-├── analysis.html # Rendered report
-├── data/ # Dataset
-
 ##  Author  
 
 Adelina Petkova 
