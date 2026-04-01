@@ -1,5 +1,7 @@
 # Urban Microclimate Analysis
 
+[View full report (HTML)](HumVe_Analysis.html)
+
 ## Overview
 This project analyzes urban climate data collected using TU Berlin’s portable climate station (HuMVe).  
 The goal is to understand how surface temperature and urban structure influence air temperature and solar radiation.
